@@ -10,7 +10,22 @@ func (tranx NewTransaction) Charge() (*TransactionResponse, error) {
 		TransactionType: "authCaptureTransaction",
 		Amount:          tranx.Amount,
 		Payment: &Payment{
-			CreditCard: tranx.CreditCard,
+			CreditCard: &tranx.CreditCard,
+		},
+		BillTo:   tranx.BillTo,
+		AuthCode: tranx.AuthCode,
+	}
+	response, err := SendTransactionRequest(new)
+	return response, err
+}
+
+func (tranx NewTokenTransaction) Charge() (*TransactionResponse, error) {
+	var new TransactionRequest
+	new = TransactionRequest{
+		TransactionType: "authCaptureTransaction",
+		Amount:          tranx.Amount,
+		Payment: &Payment{
+			OpaqueData: &tranx.OpaqueData,
 		},
 		BillTo:   tranx.BillTo,
 		AuthCode: tranx.AuthCode,
@@ -41,7 +56,7 @@ func (tranx NewTransaction) AuthOnly() (*TransactionResponse, error) {
 		TransactionType: "authOnlyTransaction",
 		Amount:          tranx.Amount,
 		Payment: &Payment{
-			CreditCard: tranx.CreditCard,
+			CreditCard: &tranx.CreditCard,
 		},
 	}
 	response, err := SendTransactionRequest(new)
@@ -136,6 +151,15 @@ type NewTransaction struct {
 	BillTo     *BillTo    `json:"omitempty"`
 }
 
+type NewTokenTransaction struct {
+	Amount     string     `json:"amount,omitempty"`
+	InvoiceId  string     `json:"invoiceId,omitempty"`
+	RefTransId string     `json:"refTransId,omitempty"`
+	OpaqueData OpaqueData `json:"payment,omitempty"`
+	AuthCode   string     `json:"authCode,omitempty"`
+	BillTo     *BillTo    `json:"omitempty"`
+}
+
 type PreviousTransaction struct {
 	RefId  string `json:"refTransId,omitempty"`
 	Amount string `json:"amount,omitempty"`
@@ -158,7 +182,7 @@ type TranxResponse struct {
 	TestRequest    string `json:"testRequest"`
 	AccountNumber  string `json:"accountNumber"`
 	AccountType    string `json:"accountType"`
-	Errors         []struct {
+	Errors []struct {
 		ErrorCode string `json:"errorCode"`
 		ErrorText string `json:"errorText"`
 	} `json:"errors"`
@@ -195,7 +219,13 @@ type CreateTransactionRequest struct {
 }
 
 type Payment struct {
-	CreditCard CreditCard `json:"creditCard,omitempty"`
+	CreditCard *CreditCard `json:"creditCard,omitempty"`
+	OpaqueData *OpaqueData `json:"opaqueData,omitempty"`
+}
+
+type OpaqueData struct {
+	DataDescriptor string `json:"dataDescriptor, omitempty"`
+	DataValue      string `json:"dataValue, omitempty"`
 }
 
 type CreditCard struct {
